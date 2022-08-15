@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ApiPictures from '../service/api';
 import s from './App.module.css';
 import Searchbar from './Searchbar/Searchbar';
@@ -13,74 +13,59 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-export default class App extends Component {
-  state = {
-    searchQuery: '',
-    pictures: [],
-    page: 1,
-    totalHits: null,
-    status: Status.IDLE,
-  };
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(null);
+  const [status, setStatus] = useState(Status.IDLE);
+  const totalPages = totalHits / 12;
 
-  bottomRef = React.createRef();
+  const bottomRef = React.useRef(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.searchQuery !== this.state.searchQuery ||
-      prevState.page !== this.state.page
-    ) {
-      this.setState({ status: Status.PENDING });
+  useEffect(() => {
+    if (!searchQuery) return;
+    setStatus(Status.PENDING);
 
-      ApiPictures(this.state.searchQuery, this.state.page).then(data => {
-        if (data.totalHits === 0) {
-          alert(`${this.state.searchQuery} not found!`);
+    ApiPictures(searchQuery, page).then(data => {
+      if (data.totalHits === 0) {
+        alert(`${searchQuery} not found!`);
+        setStatus(Status.REJECTED);
+      } else {
+        setPictures(prevPictures => [...prevPictures, ...data.hits]);
+        setStatus(Status.RESOLVED);
+        setTotalHits(data.totalHits);
+      }
+    });
 
-          this.setState({
-            status: Status.REJECTED,
-          });
-        } else {
-          this.setState(prevState => ({
-            pictures: [...prevState.pictures, ...data.hits],
-            status: Status.RESOLVED,
-            totalHits: data.totalHits,
-          }));
-        }
-      });
+    if (bottomRef.current && page > 1) {
+      bottomRef.current.scrollIntoView(false);
     }
+  }, [searchQuery, page]);
 
-    if (this.state.page > 1) {
-      this.bottomRef.current.scrollIntoView(false);
-    }
-  }
-
-  onSearchClick = searchvalue => {
-    if (searchvalue.toLowerCase() === this.state.searchQuery.toLowerCase())
-      return;
-    this.setState({ searchQuery: searchvalue, pictures: [], page: 1 });
+  const onSearchClick = searchvalue => {
+    if (searchvalue.toLowerCase() === searchQuery.toLowerCase()) return;
+    setSearchQuery(searchvalue);
+    setPictures([]);
+    setPage(1);
   };
 
-  LoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const LoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const totalPages = this.state.totalHits / 12;
-    return (
-      <>
-        <div className={s.container}>
-          <Searchbar onSearchClick={this.onSearchClick} />
-          {this.state.pictures && (
-            <ImageGallery pictures={this.state.pictures} />
-          )}
-          {this.state.status === Status.PENDING && <Spiner />}
+  return (
+    <>
+      <div className={s.container}>
+        <Searchbar onSearchClick={onSearchClick} />
+        {pictures && <ImageGallery pictures={pictures} />}
+        {status === Status.PENDING && <Spiner />}
 
-          {this.state.status === Status.RESOLVED &&
-            totalPages > this.state.page && (
-              <Button handleClick={this.LoadMore} text="Load More" />
-            )}
-          <div ref={this.bottomRef}></div>
-        </div>
-      </>
-    );
-  }
+        {status === Status.RESOLVED && totalPages > page && (
+          <Button handleClick={LoadMore} text="Load More" />
+        )}
+        <div ref={bottomRef}></div>
+      </div>
+    </>
+  );
 }

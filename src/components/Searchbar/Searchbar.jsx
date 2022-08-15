@@ -1,45 +1,40 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import s from './Searchbar.module.css';
 import PropTypes from 'prop-types';
 
-export default class Searchbar extends Component {
-  state = {
-    searchvalue: '',
+export default function Searchbar({ onSearchClick }) {
+  const [searchvalue, setSearchvalue] = useState('');
+
+  const onChange = e => {
+    setSearchvalue(e.target.value);
   };
 
-  static propTypes = {
-    onSearchClick: PropTypes.func.isRequired,
-  };
-
-  onChange = e => {
-    this.setState({ searchvalue: e.target.value });
-  };
-
-  onSubmit = e => {
+  const onSubmit = e => {
     e.preventDefault();
-    const { onSearchClick } = this.props;
-    onSearchClick(this.state.searchvalue);
+    onSearchClick(searchvalue);
   };
 
-  render() {
-    return (
-      <header className={s.searchbar}>
-        <form className={s.SearchForm} onSubmit={this.onSubmit}>
-          <button type="submit" className={s.searchbutton}>
-            <span className={s.SearchFormlabel}>Search</span>
-          </button>
+  return (
+    <header className={s.searchbar}>
+      <form className={s.SearchForm} onSubmit={onSubmit}>
+        <button type="submit" className={s.searchbutton}>
+          <span className={s.SearchFormlabel}>Search</span>
+        </button>
 
-          <input
-            className={s.SearchForminput}
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            onChange={this.onChange}
-            value={this.state.searchvalue}
-          />
-        </form>
-      </header>
-    );
-  }
+        <input
+          className={s.SearchForminput}
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          onChange={onChange}
+          value={searchvalue}
+        />
+      </form>
+    </header>
+  );
 }
+
+Searchbar.propTypes = {
+  onSearchClick: PropTypes.func.isRequired,
+};

@@ -1,68 +1,57 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import Modal from 'components/Modal/Modal';
 import s from './ImageGallery.module.css';
 import PropTypes from 'prop-types';
 
-export default class ImageGallery extends Component {
-  state = {
-    showModal: false,
-    largeImageURL: '',
-    tags: '',
+export default function ImageGallery({ pictures }) {
+  const [largeImageURL, setlargeImageURL] = useState('');
+  const [tags, settags] = useState('');
+
+  const selectImage = (largeImageURL, tags) => {
+    setlargeImageURL(largeImageURL);
+    settags(tags);
   };
 
-  static propTypes = {
-    pictures: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        largeImageURL: PropTypes.string.isRequired,
-        webformatURL: PropTypes.string.isRequired,
-        tags: PropTypes.string.isRequired,
-      })
-    ),
+  const closeModal = () => {
+    setlargeImageURL('');
+    settags('');
   };
 
-  showModal = ({ largeImageURL, tags }) => {
-    this.setState({
-      showModal: true,
-      largeImageURL: largeImageURL,
-      tags: tags,
-    });
-  };
-
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-      largeImageURL: '',
-      tags: '',
-    });
-  };
-
-  render() {
-    const { pictures } = this.props;
-
-    return (
-      <>
-        <ul className={s.ImageGallery}>
-          {pictures.map(image => (
-            <li key={image.id}>
-              <ImageGalleryItem
-                webformatURL={image.webformatURL}
-                largeImageURL={image.largeImageURL}
-                tags={image.tags}
-                showModal={this.showModal}
-              />
-            </li>
-          ))}
-        </ul>
-        {this.state.showModal && (
-          <Modal
-            largeImageURL={this.state.largeImageURL}
-            tags={this.state.tags}
-            closeModal={this.closeModal}
-          />
-        )}
-      </>
-    );
-  }
+  return (
+    <>
+      <ul className={s.ImageGallery}>
+        {pictures.map(image => (
+          <li
+            key={image.id}
+            onClick={() => selectImage(image.largeImageURL, image.tags)}
+          >
+            <ImageGalleryItem
+              webformatURL={image.webformatURL}
+              largeImageURL={image.largeImageURL}
+              tags={image.tags}
+            />
+          </li>
+        ))}
+      </ul>
+      {largeImageURL && (
+        <Modal
+          largeImageURL={largeImageURL}
+          tags={tags}
+          closeModal={closeModal}
+        />
+      )}
+    </>
+  );
 }
+
+ImageGallery.propTypes = {
+  pictures: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      largeImageURL: PropTypes.string.isRequired,
+      webformatURL: PropTypes.string.isRequired,
+      tags: PropTypes.string.isRequired,
+    })
+  ),
+};
