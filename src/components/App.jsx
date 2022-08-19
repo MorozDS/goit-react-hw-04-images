@@ -21,7 +21,7 @@ export default function App() {
   const [status, setStatus] = useState(Status.IDLE);
   const totalPages = totalHits / 12;
 
-  const bottomRef = React.useRef(null);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     if (!searchQuery) return;
